@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe de Resultados Saber 11 - INSTITUCION EDUCATIVA LICEO DEL SABER</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        header {
+            border-bottom: 3px solid #005f73;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            color: #003440;
+            margin: 0;
+            font-size: 2em;
+        }
+        .logo {
+            width: 150px;
+            height: auto;
+        }
+        .info-escuela {
+            background-color: #e9ecef;
+            border-left: 5px solid #0077b6;
+            padding: 15px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+        .info-escuela p { margin: 5px 0; font-size: 0.95em; }
+        .info-escuela strong { color: #003440; }
+        .area-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        .area-section h2 {
+            color: #0077b6;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .full-width-chart {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+        }
+        .suggestions {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .suggestions h3 { color: #005f73; margin-top: 0; }
+        .suggestions ul { padding-left: 20px; }
+        .suggestions li { margin-bottom: 10px; }
+        .toggle-button {
+            background-color: #0077b6;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 20px;
+            transition: background-color 0.2s;
+        }
+        .toggle-button:hover { background-color: #005f73; }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+            margin-top: 0;
+        }
+        .collapsible-content.is-visible {
+            max-height: 500px;
+            margin-top: 15px;
+            transition: max-height 0.5s ease-in;
+        }
+        .afirmaciones-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        .afirmaciones-table th, .afirmaciones-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .afirmaciones-table th { background-color: #e9ecef; color: #003440; }
+        .afirmaciones-table tr:nth-child(even) { background-color: #f8f9fa; }
+        @media (max-width: 900px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            header { flex-direction: column; text-align: center; }
+            .logo { margin-top: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Informe de Resultados Saber 11</h1>
+            <svg class="logo" viewBox="0 0 100 30" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100" height="30" rx="5" fill="#0077b6"/>
+                <text x="50" y="20" font-family="Arial, sans-serif" font-size="12" fill="white" text-anchor="middle" font-weight="bold">SU LOGO AQUÍ</text>
+            </svg>
+        </header>
+
+        <section class="info-escuela">
+            <div><p><strong>Establecimiento:</strong> <span id="nombre-ee"></span></p><p><strong>DANE:</strong> <span id="dane-ee"></span></p></div>
+            <div><p><strong>Municipio:</strong> <span id="municipio-ee"></span></p><p><strong>ETC:</strong> <span id="etc-ee"></span></p></div>
+        </section>
+
+        <!-- Secciones por Área -->
+        <div id="report-sections"></div>
+    </div>
+
+    <script>
+    // --- DATOS EXTRAÍDOS DEL PDF ---
+    const datosInforme = {
+        info: {
+            nombre: "INSTITUCION EDUCATIVA LICEO DEL SABER",
+            dane: "376895000809",
+            municipio: "ZARZAL - VALLE",
+            etc: "VALLE DEL CAUCA"
+        },
+        global: {
+            labels: ["Establecimiento", "ETC", "Colombia"],
+            promedios: [291, 256, 261]
+        },
+        areas: {
+            "Lectura Crítica": {
+                promedios: [60, 52, 53],
+                niveles: { labels: ["Nivel 1", "Nivel 2", "Nivel 3", "Nivel 4"], porcentajes: [8, 25, 42, 25] },
+                afirmaciones: [
+                    { nombre: "Identifica y entiende los contenidos locales que conforman un texto.", ee: 33, colombia: 46 },
+                    { nombre: "Comprende cómo se articulan las partes de un texto para darle un sentido global.", ee: 38, colombia: 47 },
+                    { nombre: "Reflexiona a partir de un texto y evalúa su contenido.", ee: 40, colombia: 51 }
+                ],
+                nivelesHistorico: {
+                    labels: ["2023-4", "2024-3", "2025-3"],
+                    datasets: [ { label: 'Nivel 1', data: [8, 17, 8] }, { label: 'Nivel 2', data: [25, 33, 25] }, { label: 'Nivel 3', data: [50, 42, 42] }, { label: 'Nivel 4', data: [17, 8, 25] } ]
+                },
+                sugerencias: [ "Implementar talleres de lectura de diferentes tipos de texto.", "Promover debates para mejorar la capacidad de evaluar y contra-argumentar.", "Trabajar en la identificación de la estructura de un argumento." ]
+            },
+            "Matemáticas": {
+                promedios: [60, 52, 54],
+                niveles: { labels: ["Nivel 1", "Nivel 2", "Nivel 3", "Nivel 4"], porcentajes: [17, 25, 41, 17] },
+                afirmaciones: [
+                    { nombre: "Comprende y transforma información cuantitativa y esquemática.", ee: 42, colombia: 52 },
+                    { nombre: "Selecciona y usa herramientas y procedimientos matemáticos.", ee: 43, colombia: 53 },
+                    { nombre: "Plantea y emplea diferentes estrategias para la solución de problemas.", ee: 44, colombia: 55 }
+                ],
+                nivelesHistorico: {
+                    labels: ["2023-4", "2024-3", "2025-3"],
+                    datasets: [ { label: 'Nivel 1', data: [17, 8, 17] }, { label: 'Nivel 2', data: [33, 42, 25] }, { label: 'Nivel 3', data: [33, 41, 41] }, { label: 'Nivel 4', data: [17, 9, 17] } ]
+                },
+                sugerencias: [ "Enfocar la enseñanza en la resolución de problemas aplicados.", "Reforzar la interpretación y representación de datos.", "Crear bancos de preguntas tipo ICFES." ]
+            },
+            "Sociales y Ciudadanas": {
+                promedios: [56, 51, 52],
+                niveles: { labels: ["Nivel 1", "Nivel 2", "Nivel 3", "Nivel 4"], porcentajes: [17, 33, 42, 8] },
+                afirmaciones: [
+                    { nombre: "Comprende modelos conceptuales, sus características y contextos de aplicación.", ee: 44, colombia: 50 },
+                    { nombre: "Analiza y evalúa la pertinencia y solidez de enunciados o argumentos.", ee: 45, colombia: 50 },
+                    { nombre: "Comprende la dimensión espacial de diferentes problemáticas y sus relaciones.", ee: 41, colombia: 50 }
+                ],
+                nivelesHistorico: {
+                    labels: ["2023-4", "2024-3", "2025-3"],
+                    datasets: [ { label: 'Nivel 1', data: [8, 17, 17] }, { label: 'Nivel 2', data: [34, 41, 33] }, { label: 'Nivel 3', data: [50, 33, 42] }, { label: 'Nivel 4', data: [8, 9, 8] } ]
+                },
+                sugerencias: [ "Fomentar el análisis de noticias y eventos actuales a la luz de la Constitución.", "Utilizar estudios de caso para desarrollar el pensamiento social.", "Promover proyectos de investigación sobre problemáticas sociales." ]
+            },
+            "Ciencias Naturales": {
+                promedios: [58, 52, 53],
+                niveles: { labels: ["Nivel 1", "Nivel 2", "Nivel 3", "Nivel 4"], porcentajes: [17, 33, 33, 17] },
+                afirmaciones: [
+                    { nombre: "Uso comprensivo del conocimiento científico.", ee: 42, colombia: 51 }, { nombre: "Explicación de fenómenos.", ee: 41, colombia: 52 }, { nombre: "Indagación.", ee: 41, colombia: 53 }
+                ],
+                nivelesHistorico: {
+                    labels: ["2023-4", "2024-3", "2025-3"],
+                    datasets: [ { label: 'Nivel 1', data: [8, 17, 17] }, { label: 'Nivel 2', data: [42, 33, 33] }, { label: 'Nivel 3', data: [42, 41, 33] }, { label: 'Nivel 4', data: [8, 9, 17] } ]
+                },
+                sugerencias: [ "Fortalecer el 'Uso comprensivo del conocimiento científico' con experimentos.", "Trabajar en la interpretación de datos en diferentes formatos.", "Vincular los conceptos científicos con problemáticas ambientales y de salud." ]
+            },
+            "Inglés": {
+                promedios: [57, 50, 50],
+                niveles: { labels: ["A-", "A1", "A2", "B1", "B+"], porcentajes: [8, 25, 25, 34, 8] },
+                afirmaciones: [],
+                nivelesHistorico: {
+                    labels: ["2023-4", "2024-3", "2025-3"],
+                    datasets: [ { label: 'A-', data: [0, 9, 8] }, { label: 'A1', data: [8, 25, 25] }, { label: 'A2', data: [42, 33, 25] }, { label: 'B1', data: [42, 25, 34] }, { label: 'B+', data: [8, 8, 8] } ]
+                },
+                sugerencias: [ "Aumentar la exposición a material auténtico en inglés.", "Realizar ejercicios específicos de 'uso del lenguaje'.", "Clasificar a los estudiantes por su nivel del MCER para focalizar la enseñanza." ]
+            }
+        }
+    };
+
+    // --- RENDERIZADO DINÁMICO ---
+    document.getElementById('nombre-ee').textContent = datosInforme.info.nombre;
+    document.getElementById('dane-ee').textContent = datosInforme.info.dane;
+    document.getElementById('municipio-ee').textContent = datosInforme.info.municipio;
+    document.getElementById('etc-ee').textContent = datosInforme.info.etc;
+
+    const reportContainer = document.getElementById('report-sections');
+    const chartColors = {
+        establecimiento: 'rgba(0, 119, 182, 0.8)', etc: 'rgba(0, 180, 216, 0.7)', nacional: 'rgba(144, 224, 239, 0.6)',
+        niveles: ['rgba(255, 99, 132, 0.7)', 'rgba(255, 159, 64, 0.7)', 'rgba(255, 206, 86, 0.7)', 'rgba(75, 192, 192, 0.7)', 'rgba(54, 162, 235, 0.7)']
+    };
+    
+    // Contenedor para Puntaje Global (opcional, si se quiere agregar)
+    
+    for (const areaNombre in datosInforme.areas) {
+        const area = datosInforme.areas[areaNombre];
+        const areaId = areaNombre.replace(/\s+/g, '-').toLowerCase();
+
+        // Crear la sección del área
+        const section = document.createElement('section');
+        section.className = 'area-section';
+        section.innerHTML = `
+            <h2>${areaNombre}</h2>
+            <div class="charts-grid">
+                <div><canvas id="${areaId}-chart-promedios"></canvas></div>
+                <div><canvas id="${areaId}-chart-niveles"></canvas></div>
+                <div class="full-width-chart">
+                    <canvas id="${areaId}-chart-historico"></canvas>
+                </div>
+            </div>
+            <button class="toggle-button" data-target="${areaId}-afirmaciones">Desempeño por Afirmación</button>
+            <div id="${areaId}-afirmaciones" class="collapsible-content">
+                <table class="afirmaciones-table">
+                    <thead><tr><th>Afirmación</th><th>% Incorrectas EE</th><th>% Incorrectas Colombia</th></tr></thead>
+                    <tbody id="${areaId}-afirmaciones-body"></tbody>
+                </table>
+            </div>
+            <div class="suggestions">
+                <h3>Sugerencias para ${areaNombre}</h3>
+                <ul>${area.sugerencias.map(s => `<li>${s}</li>`).join('')}</ul>
+            </div>
+        `;
+        reportContainer.appendChild(section);
+
+        // --- Gráficas ---
+        // 1. Promedios
+        new Chart(document.getElementById(`${areaId}-chart-promedios`), {
+            type: 'bar',
+            data: { labels: datosInforme.global.labels, datasets: [{ label: 'Puntaje Promedio', data: area.promedios, backgroundColor: [chartColors.establecimiento, chartColors.etc, chartColors.nacional] }] },
+            options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false }, title: { display: true, text: 'Comparativa de Promedios' } }, scales: { x: { min: 0, max: 100 } } }
+        });
+
+        // 2. Niveles Recientes
+        new Chart(document.getElementById(`${areaId}-chart-niveles`), {
+            type: 'doughnut',
+            data: { labels: area.niveles.labels, datasets: [{ label: '% Estudiantes', data: area.niveles.porcentajes, backgroundColor: chartColors.niveles.slice(0, area.niveles.labels.length) }] },
+            options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'Niveles Desempeño (Reciente)' } } }
+        });
+
+        // 3. Histórico de Niveles (Barras Apiladas)
+        const historicoData = area.nivelesHistorico;
+        historicoData.datasets.forEach((ds, i) => {
+            ds.backgroundColor = chartColors.niveles[i];
+        });
+        new Chart(document.getElementById(`${areaId}-chart-historico`), {
+            type: 'bar',
+            data: historicoData,
+            options: {
+                responsive: true,
+                plugins: { title: { display: true, text: 'Evolución de Niveles de Desempeño (Últimos 3 Años)' } },
+                scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: value => value + '%' } } }
+            }
+        });
+        
+        // --- Tabla de Afirmaciones ---
+        const afirmacionesBtn = document.querySelector(`[data-target="${areaId}-afirmaciones"]`);
+        if (area.afirmaciones.length > 0) {
+            const tableBody = document.getElementById(`${areaId}-afirmaciones-body`);
+            area.afirmaciones.forEach(af => {
+                let row = tableBody.insertRow();
+                row.insertCell(0).textContent = af.nombre;
+                row.insertCell(1).textContent = af.ee + '%';
+                row.insertCell(2).textContent = af.colombia + '%';
+            });
+        } else if (afirmacionesBtn) {
+            afirmacionesBtn.style.display = 'none';
+        }
+    }
+
+    // --- Funcionalidad de Botones Desplegables ---
+    document.querySelectorAll('.toggle-button').forEach(button => {
+        button.addEventListener('click', () => {
+            const target = document.getElementById(button.dataset.target);
+            target.classList.toggle('is-visible');
+        });
+    });
+    </script>
+</body>
+</html>
